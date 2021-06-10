@@ -1,0 +1,20 @@
+# 数据库配置, 目前仅支持sqlite3
+dbConfig:
+  dbType: sqlite3
+  dbPath: ./ca.db
+
+# ca对外grpc服务端口号
+port: :8098
+
+# ca对外httpPort服务端口号
+httpPort: :8909
+
+# ca根证书的地址
+certPath: ./conf/root
+
+# ca的根管理员账户, 该账户可执行ca内的所有操作
+caAdmin: dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN
+
+log:
+  level: info
+  path: ./logs
