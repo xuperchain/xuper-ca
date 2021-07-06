@@ -52,11 +52,12 @@ func GenerateCert(caCert *OriginalCert, net string, root bool, address string) (
 	cert := &x509.Certificate{
 		SerialNumber: serialNum, //证书序列号
 		Subject: pkix.Name{ // 证书的当前身份
-			Country: []string{"XCHAIN"},
+			Country:            []string{"XCHAIN"},
+			OrganizationalUnit: []string{address},
 			//	//Organization:       []string{"BD"},
 			//	//OrganizationalUnit: []string{"BD"},
 			//	//Province:           []string{"BJ"},
-			CommonName: address,
+			CommonName: net,
 			//	//Locality:           []string{"BJ"},
 		},
 		NotBefore:             time.Now(), //证书有效期开始时间
