@@ -35,7 +35,7 @@ func AddNetAdmin(net, address string) error {
 	if err != nil {
 		return err
 	}
-	nodeCert, err := GenerateCert(rootCert, net, true)
+	nodeCert, err := GenerateCert(rootCert, net, true, address)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func AddNode(net, adminAddress, address string) error {
 	if err != nil {
 		return err
 	}
-	nodeCert, err := GenerateCert(rootCert, net, false)
+	nodeCert, err := GenerateCert(rootCert, net, false, address)
 	if err != nil {
 		return err
 	}
