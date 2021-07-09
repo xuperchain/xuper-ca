@@ -33,7 +33,7 @@ func runInit(tlsPath string) error {
 	}
 
 	// 创建根证书
-	cert, err := service.GenerateCert(nil, "root", false)
+	cert, err := service.GenerateCert(nil, "root", false, config.GetCaAdmin())
 	if err != nil {
 		fmt.Println("cant init root cert", err)
 		return err

@@ -40,7 +40,7 @@ type OriginalCert struct {
 }
 
 // 生成证书
-func GenerateCert(caCert *OriginalCert, net string, root bool) (*Cert, error) {
+func GenerateCert(caCert *OriginalCert, net string, root bool, address string) (*Cert, error) {
 	validTime := time.Now().AddDate(10, 0, 0)
 	rd.Seed(time.Now().UnixNano())
 	serialNum := big.NewInt(rd.Int63())
@@ -52,7 +52,8 @@ func GenerateCert(caCert *OriginalCert, net string, root bool) (*Cert, error) {
 	cert := &x509.Certificate{
 		SerialNumber: serialNum, //证书序列号
 		Subject: pkix.Name{ // 证书的当前身份
-			Country: []string{"XCHAIN"},
+			Country:      []string{"XCHAIN"},
+			SerialNumber: address,
 			//	//Organization:       []string{"BD"},
 			//	//OrganizationalUnit: []string{"BD"},
 			//	//Province:           []string{"BJ"},
