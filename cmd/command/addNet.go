@@ -14,12 +14,13 @@ import (
 func NewAddNetCommand() *cobra.Command {
 	var address string
 	var net string
+	var isgm bool
 
 	addNetCommand := &cobra.Command{
 		Use:   "addNet",
 		Short: "add a net with a net admin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runAddNet(address, net)
+			return runAddNet(address, net, isgm)
 		},
 	}
 	addNetCommand.PersistentFlags().StringVar(&address, "Addr", "", "Address for net admin")
@@ -28,8 +29,8 @@ func NewAddNetCommand() *cobra.Command {
 	return addNetCommand
 }
 
-func runAddNet(address string, net string) error {
-	err := service.AddNetAdmin(net, address)
+func runAddNet(address string, net string, isgm bool) error {
+	err := service.AddNetAdmin(net, address, isgm)
 	if err != nil {
 		fmt.Println("create net admin failed,", err)
 	} else {

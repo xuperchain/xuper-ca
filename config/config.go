@@ -16,7 +16,7 @@ var config *Config
 
 type Config struct {
 	DbConfig DbConfig `yaml:"dbConfig,omitempty"`
-	CertPath string   `yaml:certPath,omitempty`
+	CertPath string   `yaml:"certPath,omitempty"`
 	Port     string   `yaml:"port,omitempty"`
 	HttpPort string   `yaml:"httpPort,omitempty"`
 	CaAdmin  string   `yaml:"caAdmin,omitempty"`

@@ -65,7 +65,7 @@ func (ca *caServer) NetAdminEnroll(ctx context.Context, in *pb.EnrollNetRequest)
 		}, ErrAuth
 	}
 
-	err := service.AddNetAdmin(in.Net, in.Address)
+	err := service.AddNetAdmin(in.Net, in.Address, in.Isgm)
 	if err != nil {
 		log.Error("AddNetAdmin add admin failed:", err)
 		return &pb.EnrollResponse{

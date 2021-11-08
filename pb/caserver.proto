@@ -3,8 +3,6 @@ syntax = "proto3";
 package pb;
 
 import "google/api/annotations.proto";
-
-
 // The ca service definition.
 service Caserver {
 
@@ -26,10 +24,18 @@ service Caserver {
 
     // Get Current Cert
     rpc GetCurrentCert(CurrentCertRequest) returns (CurrentCertResponse) {
+        option (google.api.http) = {
+            post: "/current/cert"
+            body: "*"
+        };
     }
 
     // Get Revoke List
     rpc GetRevokeList(RevokeListRequest) returns (RevokeListResponse) {
+        option (google.api.http) = {
+            post: "/revoke/list"
+            body: "*"
+        };
     }
 
     // Revoke a node
@@ -56,6 +62,7 @@ message EnrollNetRequest {
     Sign sign = 2;
     string address = 3;
     string net = 4;
+    bool isgm = 5;
 }
 
 message EnrollNodeRequest {

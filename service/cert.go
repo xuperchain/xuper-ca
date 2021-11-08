@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	rd "math/rand"
+	"os"
 	"strings"
 	"time"
 
@@ -60,11 +61,11 @@ func GenerateCert(caCert *OriginalCert, net string, root bool, address string) (
 			CommonName: net,
 			//	//Locality:           []string{"BJ"},
 		},
-		NotBefore:             time.Now(), //证书有效期开始时间
-		NotAfter:              validTime,  //证书有效期结束时间
-		BasicConstraintsValid: true,       //基本的有效性约束
-		IsCA:                  true,       //是否是根证书
-		//ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},            //证书用途(客户端认证，数据加密)
+		NotBefore:             time.Now(),                                                                 //证书有效期开始时间
+		NotAfter:              validTime,                                                                  //证书有效期结束时间
+		BasicConstraintsValid: true,                                                                       //基本的有效性约束
+		IsCA:                  true,                                                                       //是否是根证书
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}, //证书用途(客户端认证，数据加密)
 		//KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment | x509.KeyUsageCertSign, //产生密钥对的作用
 		//EmailAddresses:        []string{"xchain-help@baidu.com"},
 		//IPAddresses:    []net.IP{net.ParseIP("127.0.0.1")},
@@ -133,7 +134,9 @@ func GenerateCert(caCert *OriginalCert, net string, root bool, address string) (
 func GetRootCert() (*OriginalCert, error) {
 	path := config.GetCertPath()
 	if strings.LastIndex(path, "/") != len([]rune(path))-1 {
-		path = path + "/"
+		path = path + "/default/"
+	} else {
+		path = path + "default/"
 	}
 
 	// 网络名为root时是指从文件中加载caserver的根管理员
@@ -173,7 +176,12 @@ func WriteCert(path string, cert *Cert) error {
 	if strings.LastIndex(path, "/") != len([]rune(path))-1 {
 		path = path + "/"
 	}
-	err := util.WriteFileUsingFilename(path+PRIVATEKEY_NAME, []byte(cert.PrivateKey))
+	// 判断文件夹是否存在 不存在新建文件夹
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		os.Mkdir(path, os.ModePerm)
+	}
+	err = util.WriteFileUsingFilename(path+PRIVATEKEY_NAME, []byte(cert.PrivateKey))
 	if err != nil {
 		return err
 	}
