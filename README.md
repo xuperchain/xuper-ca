@@ -6,6 +6,8 @@
 
 升级国密sql语句 ```ALTER TABLE "net_admin" ADD "crypto" VARCHAR(100) DEFAULT "";```
 
+备份现有的证书,执行```./bin/ca-server init``` 会产生 defalt 和 gm两个文件夹目录,把现有的证书覆盖到 defalut目录
+
 ### 环境配置
 
 * 操作系统：支持Linux以及Mac OS
