@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 package pb;
-
 import "google/api/annotations.proto";
 // The ca service definition.
 service Caserver {
@@ -62,7 +61,7 @@ message EnrollNetRequest {
     Sign sign = 2;
     string address = 3;
     string net = 4;
-    bool isgm = 5;
+    string crypto = 5;
 }
 
 message EnrollNodeRequest {

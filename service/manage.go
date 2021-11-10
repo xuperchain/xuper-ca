@@ -16,7 +16,7 @@ import (
 )
 
 // 添加一个网络和网络管理员
-func AddNetAdmin(net, address string, isGm bool) error {
+func AddNetAdmin(net, address string, crypto string) error {
 	if net == "" || address == "" {
 		return ErrParam
 	}
@@ -32,7 +32,7 @@ func AddNetAdmin(net, address string, isGm bool) error {
 	nodeCert := &Cert{}
 	var netHdPrikey string
 	// 如果生成 gm 网络
-	if isGm {
+	if crypto == "gm" {
 		// 生成管理员证书
 		gmRootCert, err := GetRootGMCert()
 		if err != nil {
@@ -76,7 +76,7 @@ func AddNetAdmin(net, address string, isGm bool) error {
 		IsValid:      true,
 		ValidTime:    nodeCert.ValidTime,
 		HdPrivateKey: netHdPrikey,
-		IsGm:         isGm,
+		Crypto:       crypto,
 	})
 	if err != nil {
 		return ErrDB
@@ -118,7 +118,7 @@ func AddNode(net, adminAddress, address string) error {
 	var nodeHdPriKey string
 	// 根据网络的加密方式生成节点证书
 	log.Info("netadmin.....", netAdmin)
-	if netAdmin.IsGm {
+	if netAdmin.Crypto == "gm" {
 		// 获取网络管理员的GM证书
 		rootGMCert, _, err := GetAdminGMCert(net, adminAddress)
 		if err != nil {
