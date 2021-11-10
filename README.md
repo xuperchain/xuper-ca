@@ -2,7 +2,9 @@
 
 [![License](https://img.shields.io/github/license/xuperchain/xuperchain?style=flat-square)](/LICENSE)
 
-支持xchain通过CA证书控制全节点的权限
+支持xchain通过CA证书控制全节点的权限  
+
+升级国密sql语句 ```ALTER TABLE "net_admin" ADD "crypto" VARCHAR(100) DEFAULT "";```
 
 ### 环境配置
 
