@@ -31,12 +31,13 @@ func verifyRequest(sign *pb.Sign, data []byte) bool {
 	cryptoClient := crypto.GetCryptoClient()
 	pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sign.PublicKey))
 	if err != nil {
-		log.Error("crypto GetEcdsaPublicKeyFromJSON error")
+		log.Errorf("crypto GetEcdsaPublicKeyFromJSON error %v", err)
 		return false
 	}
-	ok, err := cryptoClient.VerifyECDSA(pubKey, []byte(sign.Sign), []byte(string(data)+sign.Nonce))
+	ok, err := cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
 	if err != nil {
-		log.Error("crypto VerifyECDSA error")
+		log.Errorf("crypto VerifyECDSA error %v", err)
+		return false
 	}
 	return ok
 }
