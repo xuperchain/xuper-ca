@@ -24,7 +24,6 @@ type caServer struct{}
 
 // 接口层签名校验, 检验的data根据接口不同而不同
 func verifyRequest(sign *pb.Sign, data []byte) bool {
-	return true
 	if sign == nil {
 		log.Warning("request sign is nil")
 		return false
@@ -32,12 +31,12 @@ func verifyRequest(sign *pb.Sign, data []byte) bool {
 	cryptoClient := crypto.GetCryptoClient()
 	pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sign.PublicKey))
 	if err != nil {
-		log.Debug("crypto GetEcdsaPublicKeyFromJSON error")
+		log.Error("crypto GetEcdsaPublicKeyFromJSON error")
 		return false
 	}
 	ok, err := cryptoClient.VerifyECDSA(pubKey, []byte(sign.Sign), []byte(string(data)+sign.Nonce))
 	if err != nil {
-		log.Debug("crypto VerifyECDSA error")
+		log.Error("crypto VerifyECDSA error")
 	}
 	return ok
 }
