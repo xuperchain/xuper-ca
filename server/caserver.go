@@ -7,16 +7,17 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	log "github.com/sirupsen/logrus"
+	"github.com/xuperchain/xuper-ca/crypto"
 	"github.com/xuperchain/xuper-ca/pb"
 	"github.com/xuperchain/xuper-ca/service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/xuperchain/xuper-ca/config"
-	"github.com/xuperchain/xuper-ca/crypto"
 	"github.com/xuperchain/xuper-ca/util"
 )
 
@@ -28,16 +29,53 @@ func verifyRequest(sign *pb.Sign, data []byte) bool {
 		log.Warning("request sign is nil")
 		return false
 	}
-	cryptoClient := crypto.GetCryptoClient()
-	pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sign.PublicKey))
-	if err != nil {
-		log.Errorf("crypto GetEcdsaPublicKeyFromJSON error %v", err)
-		return false
-	}
-	ok, err := cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
-	if err != nil {
-		log.Errorf("crypto VerifyECDSA error %v", err)
-		return false
+	var ok bool
+	// 根据 Sign的public
+	// log.Info("sign.PublicKey %s, dadada, %s", sign.PublicKey, sign)
+	if !strings.Contains(sign.PublicKey, "SM2") {
+		cryptoClient := crypto.GetCryptoClient()
+		pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sign.PublicKey))
+		if err != nil {
+			log.Errorf("crypto GetEcdsaPublicKeyFromJSON error %v", err)
+			return false
+		}
+		addr, err := cryptoClient.GetAddressFromPublicKey(pubKey)
+		if err != nil {
+			log.Errorf("crypto GetAddressFromPublicKey error %v", err)
+			return false
+		}
+		// 判断签名节点的地址，是不是操作对应节点的Address
+		if !strings.Contains(string(data), addr) {
+			log.Errorf("sign address is not the cert address")
+			return false
+		}
+		ok, err = cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
+		if err != nil {
+			log.Errorf("crypto VerifyECDSA error %v", err)
+			return false
+		}
+	} else {
+		cryptoClient := crypto.GetGMHdCryptoClient()
+		pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJsonStr(sign.PublicKey)
+		if err != nil {
+			log.Errorf("crypto GetEcdsaPublicKeyFromJsonStr error %v", err)
+			return false
+		}
+		addr, err := cryptoClient.GetAddressFromPublicKey(pubKey)
+		if err != nil {
+			log.Errorf("crypto GetAddressFromPublicKey error %v", err)
+			return false
+		}
+		// 判断签名节点的地址，是不是操作对应节点的Address
+		if !strings.Contains(string(data), addr) {
+			log.Errorf("sign address is not the cert address")
+			return false
+		}
+		ok, err = cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
+		if err != nil {
+			log.Errorf("crypto VerifyECDSA error %v", err)
+			return false
+		}
 	}
 	return ok
 }
