@@ -200,12 +200,12 @@ func (ca *caServer) GetRevokeList(ctx context.Context, in *pb.RevokeListRequest)
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.SerialNum+in.Net)); !ok {
-		log.Error("GetRevokeList sign is not right")
-		return &pb.RevokeListResponse{
-			Logid: in.Logid,
-		}, ErrSign
-	}
+	// if ok := verifyRequest(in.Sign, []byte(in.SerialNum+in.Net)); !ok {
+	// 	log.Error("GetRevokeList sign is not right")
+	// 	return &pb.RevokeListResponse{
+	// 		Logid: in.Logid,
+	// 	}, ErrSign
+	// }
 
 	ret, err := service.GetRevokeList(in.Net, in.SerialNum)
 	if err != nil {
