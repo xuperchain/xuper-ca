@@ -69,7 +69,7 @@ func GenerateCert(caCert *OriginalCert, net string, root bool, address string) (
 		//KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment | x509.KeyUsageCertSign, //产生密钥对的作用
 		//EmailAddresses:        []string{"xchain-help@baidu.com"},
 		//IPAddresses:    []net.IP{net.ParseIP("127.0.0.1")},
-		//DNSNames: []string{"ca.server.com"},
+		DNSNames: []string{net, "ca.shengjian.net"},
 	}
 
 	//生成公钥私钥对

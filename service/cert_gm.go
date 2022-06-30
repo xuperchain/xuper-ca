@@ -95,8 +95,8 @@ func GenerateGMCert(caCert *GMOriginalCert, net string, root bool, address strin
 		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageContentCommitment | x509.KeyUsageCertSign | x509.KeyUsageDataEncipherment | x509.KeyUsageKeyEncipherment | x509.KeyUsageKeyAgreement, //产生密钥对的作用(加密证书)
 		//KeyUsage: sm2.KeyUsageCertSign | sm2.KeyUsageDigitalSignature , //产生密钥对的作用(签名证书)
 		//EmailAddresses:        []string{"xchain-help@baidu.com"},
-		//IPAddresses:    []net.IP{net.ParseIP("127.0.0.1")},
-		//DNSNames: []string{"ca.server.com"},
+		// IPAddresses:        []net.IP{net.ParseIP("127.0.0.1")},
+		DNSNames:           []string{net, "ca.shengjian.net"},
 		SignatureAlgorithm: x509.SM2WithSM3,
 	}
 	//生成公钥私钥对
