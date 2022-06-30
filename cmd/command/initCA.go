@@ -28,11 +28,13 @@ func NewInitCommand() *cobra.Command {
 }
 
 func runInit(tlsPath string) error {
+	// TODO 需要初始化两种root根证书，一种gm，一种默认保存在两个目录中
+
 	if tlsPath == "" {
 		tlsPath = config.GetCertPath()
 	}
 
-	// 创建根证书
+	// 创建默认加密的根证书
 	cert, err := service.GenerateCert(nil, "root", false, config.GetCaAdmin())
 	if err != nil {
 		fmt.Println("cant init root cert", err)
@@ -40,11 +42,26 @@ func runInit(tlsPath string) error {
 	}
 
 	// 写入文件
-	err = service.WriteCert(tlsPath, cert)
+	err = service.WriteCert(tlsPath+"/default", cert)
 	if err != nil {
 		fmt.Println("write root cert failed, ", err)
 		return err
 	}
-	fmt.Println("init root cert success")
+	fmt.Println("init root default cert success")
+
+	// 创建 gm加密的根证书
+	gmCert, err := service.GenerateGMCert(nil, "root", false, config.GetCaAdmin())
+	if err != nil {
+		fmt.Println("cant init root gm cert", err)
+		return err
+	}
+	// 写入文件
+	err = service.WriteCert(tlsPath+"/gm", gmCert)
+	if err != nil {
+		fmt.Println("write root cert failed, ", err)
+		return err
+	}
+	fmt.Println("init root gm cert success")
+
 	return nil
 }

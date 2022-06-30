@@ -7,37 +7,75 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	log "github.com/sirupsen/logrus"
+	"github.com/xuperchain/xuper-ca/crypto"
 	"github.com/xuperchain/xuper-ca/pb"
 	"github.com/xuperchain/xuper-ca/service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/xuperchain/xuper-ca/config"
-	"github.com/xuperchain/xuper-ca/crypto"
 	"github.com/xuperchain/xuper-ca/util"
 )
 
 type caServer struct{}
 
 // 接口层签名校验, 检验的data根据接口不同而不同
-func verifyRequest(sign *pb.Sign, data []byte) bool {
+func verifyRequest(sign *pb.Sign, data []byte, reqAddress string) bool {
 	if sign == nil {
 		log.Warning("request sign is nil")
 		return false
 	}
-	cryptoClient := crypto.GetCryptoClient()
-	pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sign.PublicKey))
-	if err != nil {
-		log.Errorf("crypto GetEcdsaPublicKeyFromJSON error %v", err)
-		return false
-	}
-	ok, err := cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
-	if err != nil {
-		log.Errorf("crypto VerifyECDSA error %v", err)
-		return false
+	var ok bool
+	// 根据 Sign的public
+	// log.Info("sign.PublicKey %s, dadada, %s", sign.PublicKey, sign)
+	if !strings.Contains(sign.PublicKey, "SM2") {
+		cryptoClient := crypto.GetCryptoClient()
+		pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sign.PublicKey))
+		if err != nil {
+			log.Errorf("crypto GetEcdsaPublicKeyFromJSON error %v", err)
+			return false
+		}
+		addr, err := cryptoClient.GetAddressFromPublicKey(pubKey)
+		if err != nil {
+			log.Errorf("crypto GetAddressFromPublicKey error %v", err)
+			return false
+		}
+		// 判断签名节点的地址，是不是操作对应节点的Address
+		if addr != reqAddress {
+			log.Errorf("sign address is not the cert address")
+			return false
+		}
+		ok, err = cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
+		if err != nil {
+			log.Errorf("crypto VerifyECDSA error %v", err)
+			return false
+		}
+	} else {
+		cryptoClient := crypto.GetGMHdCryptoClient()
+		pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJsonStr(sign.PublicKey)
+		if err != nil {
+			log.Errorf("crypto GetEcdsaPublicKeyFromJsonStr error %v", err)
+			return false
+		}
+		addr, err := cryptoClient.GetAddressFromPublicKey(pubKey)
+		if err != nil {
+			log.Errorf("crypto GetAddressFromPublicKey error %v", err)
+			return false
+		}
+		// 判断签名节点的地址，是不是操作对应节点的Address
+		if addr != reqAddress {
+			log.Errorf("sign address is not the cert address")
+			return false
+		}
+		ok, err = cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
+		if err != nil {
+			log.Errorf("crypto VerifyECDSA error %v", err)
+			return false
+		}
 	}
 	return ok
 }
@@ -51,7 +89,7 @@ func (ca *caServer) NetAdminEnroll(ctx context.Context, in *pb.EnrollNetRequest)
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net)); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address); !ok {
 		log.Error("NetAdminEnroll sign is not right")
 		return &pb.EnrollResponse{
 			Logid: in.Logid,
@@ -65,7 +103,7 @@ func (ca *caServer) NetAdminEnroll(ctx context.Context, in *pb.EnrollNetRequest)
 		}, ErrAuth
 	}
 
-	err := service.AddNetAdmin(in.Net, in.Address)
+	err := service.AddNetAdmin(in.Net, in.Address, in.Crypto)
 	if err != nil {
 		log.Error("AddNetAdmin add admin failed:", err)
 		return &pb.EnrollResponse{
@@ -87,7 +125,7 @@ func (ca *caServer) NodeEnroll(ctx context.Context, in *pb.EnrollNodeRequest) (*
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net)); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address); !ok {
 		log.Error("NodeEnroll sign is not right")
 		return &pb.EnrollResponse{
 			Logid: in.Logid,
@@ -123,7 +161,7 @@ func (ca *caServer) GetCurrentCert(ctx context.Context, in *pb.CurrentCertReques
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net)); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address); !ok {
 		log.Error("GetCurrentCert sign is not right")
 		return &pb.CurrentCertResponse{
 			Logid: in.Logid,
@@ -162,7 +200,7 @@ func (ca *caServer) GetRevokeList(ctx context.Context, in *pb.RevokeListRequest)
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.SerialNum+in.Net)); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.SerialNum+in.Net), in.Sign.Address); !ok {
 		log.Error("GetRevokeList sign is not right")
 		return &pb.RevokeListResponse{
 			Logid: in.Logid,
@@ -194,7 +232,7 @@ func (ca *caServer) RevokeCert(ctx context.Context, in *pb.RevokeNodeRequest) (*
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net)); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address); !ok {
 		log.Error("GetCurrentCert sign is not right")
 		return &pb.RevokeNodeResponse{
 			Logid: in.Logid,
@@ -209,7 +247,7 @@ func (ca *caServer) RevokeCert(ctx context.Context, in *pb.RevokeNodeRequest) (*
 	}
 
 	ret, err := service.RevokeNode(in.Net, in.Address)
-	if ret == true {
+	if ret {
 		return &pb.RevokeNodeResponse{
 			Logid: in.Logid,
 		}, nil
@@ -226,7 +264,7 @@ func (ca *caServer) DecryptByHdKey(ctx context.Context, in *pb.DecryptByHdKeyReq
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net+in.ChildHdpubKey+in.CypherText)); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net+in.ChildHdpubKey+in.CypherText), in.Address); !ok {
 		log.Error("DecryptByHdKey sign is not right")
 		return &pb.DecryptByHdKeyResponse{
 			Logid: in.Logid,

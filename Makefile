@@ -53,9 +53,9 @@ build: set-env
 	#$(GOBUILD) -o $(HOMEDIR)/front-server $(HOMEDIR)/front/server.go
 	$(GOBUILD) -o $(HOMEDIR)/ca-server $(HOMEDIR)/cmd/caserver.go
 #test阶段，进行单元测试， 可单独执行命令: make test
-test: test-case
-test-case: set-env
-	$(GOTEST) -v -cover $(GOPKGS)
+# test: test-case
+# test-case: set-env
+# 	$(GOTEST) -v -cover $(GOPKGS)
 #与覆盖率平台打通，输出测试结果到文件中
 #@$(GOTEST) -v -json -coverprofile=coverage.out $(GOPKGS) > testlog.out
 #package阶段，对编译产出进行打包，输出到output目录， 可单独执行命令: make package
