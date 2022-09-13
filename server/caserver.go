@@ -25,11 +25,12 @@ type caServer struct{}
 
 // 接口层签名校验, 检验的data根据接口不同而不同
 func verifyRequest(sign *pb.Sign, data []byte, reqAddress string) bool {
-	return true
-	if sign == nil {
-		log.Warning("request sign is nil")
+	// 获取网络名
+	net := strings.Split(string(data), reqAddress)
+	if len(net) < 2 {
 		return false
 	}
+
 	var ok bool
 	// 根据 Sign的public
 	// log.Info("sign.PublicKey %s, dadada, %s", sign.PublicKey, sign)
@@ -40,19 +41,20 @@ func verifyRequest(sign *pb.Sign, data []byte, reqAddress string) bool {
 			log.Errorf("crypto GetEcdsaPublicKeyFromJSON error %v", err)
 			return false
 		}
-		addr, err := cryptoClient.GetAddressFromPublicKey(pubKey)
-		if err != nil {
-			log.Errorf("crypto GetAddressFromPublicKey error %v", err)
-			return false
-		}
-		// 判断签名节点的地址，是不是操作对应节点的Address
-		if addr != reqAddress {
-			log.Errorf("sign address is not the cert address")
-			return false
-		}
 		ok, err = cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
 		if err != nil {
 			log.Errorf("crypto VerifyECDSA error %v", err)
+			return false
+		}
+		// 签名验证通过 从公钥解析签名者的address。然后验证其是不是网络管理员，节点管理员 或者 根管理员
+		signAddress, err := cryptoClient.GetAddressFromPublicKey(pubKey)
+		if err != nil {
+			log.Errorf("get sign address error %v", err)
+			return false
+		}
+
+		// 校验签名的address 是否满足满足条件
+		if ok := service.CheckNode(signAddress, net[1]); !ok {
 			return false
 		}
 	} else {
@@ -62,19 +64,20 @@ func verifyRequest(sign *pb.Sign, data []byte, reqAddress string) bool {
 			log.Errorf("crypto GetEcdsaPublicKeyFromJsonStr error %v", err)
 			return false
 		}
-		addr, err := cryptoClient.GetAddressFromPublicKey(pubKey)
-		if err != nil {
-			log.Errorf("crypto GetAddressFromPublicKey error %v", err)
-			return false
-		}
-		// 判断签名节点的地址，是不是操作对应节点的Address
-		if addr != reqAddress {
-			log.Errorf("sign address is not the cert address")
-			return false
-		}
 		ok, err = cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
 		if err != nil {
 			log.Errorf("crypto VerifyECDSA error %v", err)
+			return false
+		}
+		// 签名验证通过 从公钥解析签名者的address。然后验证其是不是网络管理员，节点管理员 或者 根管理员
+		signAddress, err := cryptoClient.GetAddressFromPublicKey(pubKey)
+		if err != nil {
+			log.Errorf("get sign address error %v", err)
+			return false
+		}
+
+		// 校验签名的address 是否满足满足条件
+		if ok := service.CheckNode(signAddress, net[1]); !ok {
 			return false
 		}
 	}
@@ -240,7 +243,7 @@ func (ca *caServer) RevokeCert(ctx context.Context, in *pb.RevokeNodeRequest) (*
 		}, ErrSign
 	}
 
-	if ok := service.CheckNetAdmin(in.Sign.Address, in.Net); !ok {
+	if ok := service.CheckNode(in.Sign.Address, in.Net); !ok {
 		log.Warning("address isn't net admin")
 		return &pb.RevokeNodeResponse{
 			Logid: in.Logid,
