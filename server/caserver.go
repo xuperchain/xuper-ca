@@ -24,11 +24,7 @@ import (
 type caServer struct{}
 
 // 接口层签名校验, 检验的data根据接口不同而不同
-func verifyRequest(sign *pb.Sign, data []byte, reqAddress string) bool {
-	if sign == nil {
-		log.Warning("request sign is nil")
-		return false
-	}
+func verifyRequest(sign *pb.Sign, data []byte, reqAddress string, netName string) bool {
 	var ok bool
 	// 根据 Sign的public
 	// log.Info("sign.PublicKey %s, dadada, %s", sign.PublicKey, sign)
@@ -39,19 +35,20 @@ func verifyRequest(sign *pb.Sign, data []byte, reqAddress string) bool {
 			log.Errorf("crypto GetEcdsaPublicKeyFromJSON error %v", err)
 			return false
 		}
-		addr, err := cryptoClient.GetAddressFromPublicKey(pubKey)
-		if err != nil {
-			log.Errorf("crypto GetAddressFromPublicKey error %v", err)
-			return false
-		}
-		// 判断签名节点的地址，是不是操作对应节点的Address
-		if addr != reqAddress {
-			log.Errorf("sign address is not the cert address")
-			return false
-		}
 		ok, err = cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
 		if err != nil {
 			log.Errorf("crypto VerifyECDSA error %v", err)
+			return false
+		}
+		// 签名验证通过 从公钥解析签名者的address。然后验证其是不是网络管理员，节点管理员 或者 根管理员
+		signAddress, err := cryptoClient.GetAddressFromPublicKey(pubKey)
+		if err != nil {
+			log.Errorf("get sign address error %v", err)
+			return false
+		}
+
+		// 校验签名的address 是否满足满足条件
+		if ok := service.CheckNode(signAddress, netName); !ok {
 			return false
 		}
 	} else {
@@ -61,19 +58,20 @@ func verifyRequest(sign *pb.Sign, data []byte, reqAddress string) bool {
 			log.Errorf("crypto GetEcdsaPublicKeyFromJsonStr error %v", err)
 			return false
 		}
-		addr, err := cryptoClient.GetAddressFromPublicKey(pubKey)
-		if err != nil {
-			log.Errorf("crypto GetAddressFromPublicKey error %v", err)
-			return false
-		}
-		// 判断签名节点的地址，是不是操作对应节点的Address
-		if addr != reqAddress {
-			log.Errorf("sign address is not the cert address")
-			return false
-		}
 		ok, err = cryptoClient.VerifyECDSA(pubKey, sign.Sign, []byte(string(data)+sign.Nonce))
 		if err != nil {
 			log.Errorf("crypto VerifyECDSA error %v", err)
+			return false
+		}
+		// 签名验证通过 从公钥解析签名者的address。然后验证其是不是网络管理员，节点管理员 或者 根管理员
+		signAddress, err := cryptoClient.GetAddressFromPublicKey(pubKey)
+		if err != nil {
+			log.Errorf("get sign address error %v", err)
+			return false
+		}
+
+		// 校验签名的address 是否满足满足条件
+		if ok := service.CheckNode(signAddress, netName); !ok {
 			return false
 		}
 	}
@@ -89,7 +87,7 @@ func (ca *caServer) NetAdminEnroll(ctx context.Context, in *pb.EnrollNetRequest)
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address, in.Net); !ok {
 		log.Error("NetAdminEnroll sign is not right")
 		return &pb.EnrollResponse{
 			Logid: in.Logid,
@@ -125,7 +123,7 @@ func (ca *caServer) NodeEnroll(ctx context.Context, in *pb.EnrollNodeRequest) (*
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address, in.Net); !ok {
 		log.Error("NodeEnroll sign is not right")
 		return &pb.EnrollResponse{
 			Logid: in.Logid,
@@ -161,7 +159,7 @@ func (ca *caServer) GetCurrentCert(ctx context.Context, in *pb.CurrentCertReques
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address, in.Net); !ok {
 		log.Error("GetCurrentCert sign is not right")
 		return &pb.CurrentCertResponse{
 			Logid: in.Logid,
@@ -200,7 +198,7 @@ func (ca *caServer) GetRevokeList(ctx context.Context, in *pb.RevokeListRequest)
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.SerialNum+in.Net), in.Sign.Address); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.SerialNum+in.Net), in.Sign.Address, in.Net); !ok {
 		log.Error("GetRevokeList sign is not right")
 		return &pb.RevokeListResponse{
 			Logid: in.Logid,
@@ -232,14 +230,14 @@ func (ca *caServer) RevokeCert(ctx context.Context, in *pb.RevokeNodeRequest) (*
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net), in.Address, in.Net); !ok {
 		log.Error("GetCurrentCert sign is not right")
 		return &pb.RevokeNodeResponse{
 			Logid: in.Logid,
 		}, ErrSign
 	}
 
-	if ok := service.CheckNetAdmin(in.Sign.Address, in.Net); !ok {
+	if ok := service.CheckNode(in.Sign.Address, in.Net); !ok {
 		log.Warning("address isn't net admin")
 		return &pb.RevokeNodeResponse{
 			Logid: in.Logid,
@@ -264,7 +262,7 @@ func (ca *caServer) DecryptByHdKey(ctx context.Context, in *pb.DecryptByHdKeyReq
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net+in.ChildHdpubKey+in.CypherText), in.Address); !ok {
+	if ok := verifyRequest(in.Sign, []byte(in.Address+in.Net+in.ChildHdpubKey+in.CypherText), in.Address, in.Net); !ok {
 		log.Error("DecryptByHdKey sign is not right")
 		return &pb.DecryptByHdKeyResponse{
 			Logid: in.Logid,
