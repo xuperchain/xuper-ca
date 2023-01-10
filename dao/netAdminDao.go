@@ -20,6 +20,7 @@ type NetAdmin struct {
 	IsValid      bool   `db:"is_valid"`
 	ValidTime    int    `db:"valid_time"`
 	HdPrivateKey string `db:"hd_private_key"`
+	Crypto       string `db:"crypto"`
 }
 
 // ca内的网络管理数据层
@@ -35,7 +36,7 @@ func (netAdminDao *NetAdminDao) Insert(netAdmin *NetAdmin) (int64, error) {
 	caDb := GetDbInstance()
 	result, err := caDb.db.Exec(
 		"INSERT INTO net_admin(`net`, `address`, `serial_num`, `cert`, `private_key`, `create_time`, `update_time`, `is_valid`, "+
-			"`valid_time`, `hd_private_key`) VALUES (?,?,?,?,?,?,?,?,?,?)",
+			"`valid_time`, `hd_private_key`, `crypto`) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
 		netAdmin.Net,
 		netAdmin.Address,
 		netAdmin.SerialNum,
@@ -45,7 +46,8 @@ func (netAdminDao *NetAdminDao) Insert(netAdmin *NetAdmin) (int64, error) {
 		netAdmin.UpdateTime,
 		netAdmin.IsValid,
 		netAdmin.ValidTime,
-		netAdmin.HdPrivateKey)
+		netAdmin.HdPrivateKey,
+		netAdmin.Crypto)
 	if err != nil {
 		log.Print(err)
 		return 0, err

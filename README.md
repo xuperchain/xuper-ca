@@ -2,7 +2,11 @@
 
 [![License](https://img.shields.io/github/license/xuperchain/xuperchain?style=flat-square)](/LICENSE)
 
-支持xchain通过CA证书控制全节点的权限
+支持xchain通过CA证书控制全节点的权限  
+
+升级国密sql语句 ```ALTER TABLE "net_admin" ADD "crypto" VARCHAR(100) DEFAULT "";```
+
+备份现有的证书,执行```./bin/ca-server init``` 会产生 default 和 gm两个文件夹目录,把现有的证书覆盖到 default目录
 
 ### 环境配置
 

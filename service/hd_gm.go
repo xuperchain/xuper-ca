@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2019. Baidu Inc. All Rights Reserved.
- */
 package service
 
 import (
@@ -9,17 +6,11 @@ import (
 	"github.com/xuperchain/xuper-ca/crypto"
 )
 
-// The range for hardened child keys is [2^31, 2^32 - 1].
-const (
-	HardenedKeyStart = 0x80000000
-	Language         = 1
-	StrengthHard     = 3
-)
-
 // 生成网络根私钥
-func GenerateNetHdPriKey() (string, error) {
+func GenerateGMNetHdPriKey() (string, error) {
+
 	// 生成助记词
-	cryptoClient := crypto.GetHdCryptoClient()
+	cryptoClient := crypto.GetGMHdCryptoClient()
 	ecdsaAccount, err := cryptoClient.CreateNewAccountWithMnemonic(Language, StrengthHard)
 	if err != nil {
 		log.Printf("CreateNewAccountWithMnemonic failed and err is: %v", err)
@@ -36,14 +27,14 @@ func GenerateNetHdPriKey() (string, error) {
 }
 
 // 生成全节点的一级私钥
-func GenerateNodeHdPriKey(total uint32, netHdPriKey string) (string, error) {
+func GenerateNodeGMHdPriKey(total uint32, netHdPriKey string) (string, error) {
 	// 兼容旧网络
 	if netHdPriKey == "" {
 		return "", nil
 	}
 	nodeHdKeyStart := HardenedKeyStart + total
 
-	cryptoClient := crypto.GetHdCryptoClient()
+	cryptoClient := crypto.GetGMHdCryptoClient()
 	childHdKey, err := cryptoClient.GenerateChildKey(netHdPriKey, nodeHdKeyStart)
 	if err != nil {
 		log.Printf("GenerateChildKey failed and err is: %v", err)
@@ -53,12 +44,12 @@ func GenerateNodeHdPriKey(total uint32, netHdPriKey string) (string, error) {
 }
 
 // 交易解密
-func DecryptByNetHdPriKey(netHdPriKey, childHdPubKey, cypherText string) (string, error) {
+func DecryptByGMNetHdPriKey(netHdPriKey, childHdPubKey, cypherText string) (string, error) {
 	if netHdPriKey == "" || childHdPubKey == "" || cypherText == "" {
 		return "", ErrParam
 	}
 	// hd客户端
-	cryptoClient := crypto.GetHdCryptoClient()
+	cryptoClient := crypto.GetGMHdCryptoClient()
 	// test
 	/*
 		parentPublicKey, _ := cryptoClient.ConvertPrvKeyToPubKey(netHdPriKey)

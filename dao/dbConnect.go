@@ -44,7 +44,8 @@ create table net_admin (
     update_time int(10) NOT NULL,
     is_valid BOOLEAN DEFAULT TRUE,
     valid_time int(10) NOT NULL,
-    hd_private_key TEXT NOT NULL DEFAULT ''
+    hd_private_key TEXT NOT NULL DEFAULT '',
+	crypto varchar(100) NOT NULL
 );
 CREATE UNIQUE INDEX uidx_net_serial ON net_admin(serial_num);
 CREATE INDEX idx_net ON net_admin(net);
