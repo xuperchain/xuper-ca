@@ -25,6 +25,10 @@ type caServer struct{}
 
 // 接口层签名校验, 检验的data根据接口不同而不同
 func verifyRequest(sign *pb.Sign, data []byte, reqAddress string, netName string) bool {
+	if sign == nil {
+		log.Warning("request sign is nil")
+		return false
+	}
 	var ok bool
 	// 根据 Sign的public
 	// log.Info("sign.PublicKey %s, dadada, %s", sign.PublicKey, sign)
