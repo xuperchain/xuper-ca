@@ -50,7 +50,6 @@ func verifyRequest(sign *pb.Sign, data []byte, reqAddress string, netName string
 			log.Errorf("get sign address error %v", err)
 			return false
 		}
-
 		// 校验签名的address 是否满足满足条件
 		if ok := service.CheckNode(signAddress, netName); !ok {
 			return false
@@ -170,13 +169,6 @@ func (ca *caServer) GetCurrentCert(ctx context.Context, in *pb.CurrentCertReques
 		}, ErrSign
 	}
 
-	if ok := service.CheckNode(in.Sign.Address, in.Net); !ok {
-		log.Warning("address isn't a node's address")
-		return &pb.CurrentCertResponse{
-			Logid: in.Logid,
-		}, ErrAuth
-	}
-
 	cert, nodeHdPriKey, err := service.GetNode(in.Net, in.Address)
 	if err != nil {
 		log.Warning("GetCurrentCert failed, err:", err)
@@ -202,12 +194,12 @@ func (ca *caServer) GetRevokeList(ctx context.Context, in *pb.RevokeListRequest)
 	}
 	log.AddHook(util.NewlogIdHook(in.GetLogid()))
 
-	if ok := verifyRequest(in.Sign, []byte(in.SerialNum+in.Net), in.Sign.Address, in.Net); !ok {
-		log.Error("GetRevokeList sign is not right")
-		return &pb.RevokeListResponse{
-			Logid: in.Logid,
-		}, ErrSign
-	}
+	// if ok := verifyRequest(in.Sign, []byte(in.SerialNum+in.Net), in.Sign.Address, in.Net); !ok {
+	// 	log.Error("GetRevokeList sign is not right")
+	// 	return &pb.RevokeListResponse{
+	// 		Logid: in.Logid,
+	// 	}, ErrSign
+	// }
 
 	ret, err := service.GetRevokeList(in.Net, in.SerialNum)
 	if err != nil {
@@ -239,13 +231,6 @@ func (ca *caServer) RevokeCert(ctx context.Context, in *pb.RevokeNodeRequest) (*
 		return &pb.RevokeNodeResponse{
 			Logid: in.Logid,
 		}, ErrSign
-	}
-
-	if ok := service.CheckNode(in.Sign.Address, in.Net); !ok {
-		log.Warning("address isn't net admin")
-		return &pb.RevokeNodeResponse{
-			Logid: in.Logid,
-		}, ErrAuth
 	}
 
 	ret, err := service.RevokeNode(in.Net, in.Address)
