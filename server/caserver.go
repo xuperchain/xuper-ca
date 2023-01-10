@@ -34,7 +34,7 @@ func verifyRequest(sign *pb.Sign, data []byte, reqAddress string) bool {
 	// log.Info("sign.PublicKey %s, dadada, %s", sign.PublicKey, sign)
 	if !strings.Contains(sign.PublicKey, "SM2") {
 		cryptoClient := crypto.GetCryptoClient()
-		pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sign.PublicKey))
+		pubKey, err := cryptoClient.GetEcdsaPublicKeyFromJsonStr(sign.PublicKey)
 		if err != nil {
 			log.Errorf("crypto GetEcdsaPublicKeyFromJSON error %v", err)
 			return false

@@ -25,7 +25,7 @@ func GenerateNetHdPriKey() (string, error) {
 		log.Printf("CreateNewAccountWithMnemonic failed and err is: %v", err)
 		return "", err
 	}
-	log.Printf("mnemonic is %v, Address: %v , jsonPrivateKey: %v, jsonPublicKey: %v", ecdsaAccount.Mnemonic, ecdsaAccount.Address, ecdsaAccount.JSONPrivateKey, ecdsaAccount.JSONPublicKey)
+	log.Printf("mnemonic is %v, Address: %v , jsonPrivateKey: %v, jsonPublicKey: %v", ecdsaAccount.Mnemonic, ecdsaAccount.Address, ecdsaAccount.JsonPrivateKey, ecdsaAccount.JsonPublicKey)
 
 	jsonMasterKey, err := cryptoClient.GenerateMasterKeyByMnemonic(ecdsaAccount.Mnemonic, Language)
 	if err != nil {

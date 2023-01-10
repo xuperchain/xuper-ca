@@ -4,14 +4,14 @@
 package crypto
 
 import (
+	"github.com/xuperchain/crypto/client/service/base"
 	"github.com/xuperchain/crypto/client/service/gm"
-	"github.com/xuperchain/xuperchain/core/crypto/client/base"
-	eccdefault "github.com/xuperchain/xuperchain/core/crypto/client/xchain"
+	"github.com/xuperchain/crypto/client/service/xchain"
 )
 
 // var CryptoTypeConfig = crypto_client.CryptoTypeDefault
 func getInstance() interface{} {
-	return &eccdefault.XchainCryptoClient{}
+	return &xchain.XchainCryptoClient{}
 }
 
 // GetCryptoClient get crypto client
@@ -21,8 +21,8 @@ func GetCryptoClient() base.CryptoClient {
 }
 
 // Get HdCrypto Client
-func GetHdCryptoClient() *eccdefault.XchainCryptoClient {
-	return new(eccdefault.XchainCryptoClient)
+func GetHdCryptoClient() *xchain.XchainCryptoClient {
+	return new(xchain.XchainCryptoClient)
 }
 
 func GetGMHdCryptoClient() *gm.GmCryptoClient {
