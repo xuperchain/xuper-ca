@@ -54,21 +54,13 @@ func GenerateCert(caCert *OriginalCert, net string, root bool, address string) (
 		Subject: pkix.Name{ // 证书的当前身份
 			Country:      []string{"XCHAIN"},
 			SerialNumber: address,
-			//	//Organization:       []string{"BD"},
-			//	//OrganizationalUnit: []string{"BD"},
-			//	//Province:           []string{"BJ"},
-			CommonName: net,
-			//	//Locality:           []string{"BJ"},
+			CommonName:   net,
 		},
 		NotBefore:             time.Now(), //证书有效期开始时间
 		NotAfter:              validTime,  //证书有效期结束时间
 		BasicConstraintsValid: true,       //基本的有效性约束
 		IsCA:                  true,       //是否是根证书
-		//ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},            //证书用途(客户端认证，数据加密)
-		//KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment | x509.KeyUsageCertSign, //产生密钥对的作用
-		//EmailAddresses:        []string{"xchain-help@baidu.com"},
-		//IPAddresses:    []net.IP{net.ParseIP("127.0.0.1")},
-		//DNSNames: []string{"ca.server.com"},
+		DNSNames:              []string{net},
 	}
 
 	//生成公钥私钥对
