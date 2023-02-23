@@ -12,8 +12,8 @@ endif
 
 # init GO & GOD path
 export GOROOT  := $(shell go env GOROOT)
-export GOPATH  := $(HOMEDIR)/../../../
-export PATH    := $(GOPATH)/bin:$(GOROOT)/bin:$(PATH)
+#export GOPATH  := $(HOMEDIR)/../../../
+#export PATH    := $(GOPATH)/bin:$(GOROOT)/bin:$(PATH)
 export GOPROXY :=
 
 #ifndef $(USER)
@@ -30,7 +30,7 @@ OUTDIRNORMAL := $(OUTDIR)/caserver
 
 #初始化命令变量
 GO      := $(GOROOT)/bin/go
-export GOPATH  := $(HOMEDIR)/../../../
+#export GOPATH  := $(HOMEDIR)/../../../
 GOMOD   := $(GO) mod
 GOBUILD := $(GO) build
 GOTEST  := $(GO) test
